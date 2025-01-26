@@ -1,0 +1,42 @@
+services:
+  app:
+    container_name: app
+    build:
+      context: .
+    command: python provenance_store/manage.py runserver 0.0.0.0:8000
+    #command: tail -f /dev/null
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    networks:
+      - amplify_provenance
+    restart: unless-stopped
+    depends_on:
+      - db
+
+  db:
+    container_name: db
+    image: postgres:17.2-alpine
+    env_file:
+      - .env
+    volumes:
+      - /srv/amplify-provenance:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - amplify_provenance
+    restart: unless-stopped
+    healthcheck:
+      test: "pg_isready -h db"
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 3s
+
+networks:
+  amplify_provenance:
+    name: amplify_provenance
+    driver: bridge
