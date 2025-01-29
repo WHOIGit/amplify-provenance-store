@@ -4,9 +4,10 @@ services:
     build:
       context: .
     command: python provenance_store/manage.py runserver 0.0.0.0:8000
-    #command: tail -f /dev/null
     ports:
       - "8000:8000"
+    environment:
+      POSTGRES_HOST: "${POSTGRES_HOST:-db}"
     env_file:
       - .env
     volumes:
@@ -20,10 +21,12 @@ services:
   db:
     container_name: db
     image: postgres:17.2-alpine
+    environment:
+      POSTGRES_HOST: "${POSTGRES_HOST:-db}"
     env_file:
       - .env
     volumes:
-      - /srv/amplify-provenance:/var/lib/postgresql/data
+      - ${POSTGRES_DATA:-/srv/amplify-provenance}:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
