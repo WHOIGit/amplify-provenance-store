@@ -1,0 +1,49 @@
+services:
+  app:
+    build:
+      context: .
+    command: python provenance_store/manage.py runserver 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_HOST: "${POSTGRES_HOST:-db}"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    networks:
+      - amplify_provenance
+    restart: unless-stopped
+    depends_on:
+      - db
+
+  db:
+    image: postgres:17.2-alpine
+    environment:
+      POSTGRES_HOST: "${POSTGRES_HOST:-db}"
+    env_file:
+      - .env
+    volumes:
+      # To use a folder location on the host
+      - ${POSTGRES_DATA:-/srv/amplify-provenance}:/var/lib/postgresql/data
+      # To use a docker-managed volume. You must also uncomment the volumes section further down
+      #- provenance_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - amplify_provenance
+    restart: unless-stopped
+    healthcheck:
+      test: "pg_isready -h db"
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 3s
+
+networks:
+  amplify_provenance:
+    name: amplify_provenance
+    driver: bridge
+
+volumes:
+  provenance_data:
